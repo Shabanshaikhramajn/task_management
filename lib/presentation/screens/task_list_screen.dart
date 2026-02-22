@@ -22,13 +22,12 @@ class _TaskListScreenState extends State<TaskListScreen> {
   void initState() {
     super.initState();
     context.read<TaskBloc>().add(LoadTasks());
-
     _scrollController.addListener(_onScroll);
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+        _scrollController.position.maxScrollExtent - 100) {
       context.read<TaskBloc>().add(LoadNextPage());
     }
   }
@@ -59,13 +58,15 @@ class _TaskListScreenState extends State<TaskListScreen> {
             },
             itemBuilder: (_) => const [
               PopupMenuItem(value: null, child: Text('All')),
+              PopupMenuItem(value: TaskStatus.pending, child: Text('Pending')),
               PopupMenuItem(
-                  value: TaskStatus.pending, child: Text('Pending')),
+                value: TaskStatus.inProgress,
+                child: Text('In Progress'),
+              ),
               PopupMenuItem(
-                  value: TaskStatus.inProgress,
-                  child: Text('In Progress')),
-              PopupMenuItem(
-                  value: TaskStatus.completed, child: Text('Completed')),
+                value: TaskStatus.completed,
+                child: Text('Completed'),
+              ),
             ],
           ),
         ],
@@ -100,15 +101,12 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     },
                     child: ListView.builder(
                       controller: _scrollController,
-                      itemCount: state.tasks.length +
-                          (state.hasReachedEnd ? 0 : 1),
+                      itemCount: state.tasks.length + (state.hasReachedEnd ? 0 : 1),
                       itemBuilder: (context, index) {
                         if (index >= state.tasks.length) {
                           return const Padding(
                             padding: EdgeInsets.all(16),
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
+                            child: Center(child: CircularProgressIndicator()),
                           );
                         }
 

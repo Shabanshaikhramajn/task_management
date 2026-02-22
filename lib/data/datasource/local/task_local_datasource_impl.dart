@@ -15,12 +15,14 @@ class TaskLocalDatasourceImpl implements TaskLocalDataSource {
   }
 
   @override
-  Future<List<Task>> fetchTasks (int limit, int offset)async {
-    return box.values
-      .skip(offset)
-      .take(limit)
-      .map((e)=> e.toEntity())
-      .toList();
+  Future<List<Task>> fetchAllTasks (int limit, int offset)async {
+     final tasks = box.values
+                   .map((e)=> e.toEntity())
+                   .toList();
+
+       tasks.sort((a,b)=> b.createdAt.compareTo(a.createdAt));
+
+    return  tasks.skip(offset).take(limit).toList();
   }
 
   @override

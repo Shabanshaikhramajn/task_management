@@ -8,28 +8,60 @@ class TaskFormBloc extends Bloc<TaskFormEvent, TaskFormState> {
   final SaveTaskUseCase saveTask;
   bool isSaving = false;
 
-  TaskFormBloc(this.saveTask) : super(TaskFormIdle());
+  TaskFormBloc(this.saveTask) : super(TaskFormIdle()) {
+    on<CreateTask>(_onCreateTask);
+    on<UpdateTask>(_onUpdateTask);
+  }
 
-  @override
-  Stream<TaskFormState> mapEventToState(TaskFormEvent event) async* {
+  Future<void> _onCreateTask(
+    CreateTask event,
+    Emitter<TaskFormState> emit,
+  ) async {
     if (isSaving) return;
 
-    if (event is CreateTask || event is UpdateTask) {
-      isSaving = true;
-      yield TaskFormSaving();
+    isSaving = true;
+    emit(TaskFormSaving());
 
-      final Task originalTask =
-          event is CreateTask ? event.task : (event as UpdateTask).task;
-
-      final updatedTask = originalTask.copyWith(
+    try {
+      // await Future.delayed(const Duration(seconds: 3));
+      final task = event.task.copyWith(
         updatedAt: DateTime.now(),
         syncStatus: SyncStatus.pendingSync,
       );
 
-      await saveTask(updatedTask);
+      await saveTask(task);
 
+      emit(TaskFormSaved());
+    } catch (e) {
+      emit(TaskFormError(e.toString()));
+    } finally {
       isSaving = false;
-      yield TaskFormSaved();
+    }
+  }
+
+  Future<void> _onUpdateTask(
+    UpdateTask event,
+    Emitter<TaskFormState> emit,
+  ) async {
+    if (isSaving) return;
+
+    isSaving = true;
+    emit(TaskFormSaving());
+
+    try {
+      // await Future.delayed(const Duration(seconds: 3));
+      final task = event.task.copyWith(
+        updatedAt: DateTime.now(),
+        syncStatus: SyncStatus.pendingSync,
+      );
+
+      await saveTask(task);
+
+      emit(TaskFormSaved());
+    } catch (e) {
+      emit(TaskFormError(e.toString()));
+    } finally {
+      isSaving = false;
     }
   }
 }

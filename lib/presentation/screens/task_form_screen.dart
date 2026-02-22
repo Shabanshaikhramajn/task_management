@@ -23,10 +23,12 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
   @override
   void initState() {
     super.initState();
-    _titleController =
-        TextEditingController(text: widget.existingTask?.title ?? '');
-    _descriptionController =
-        TextEditingController(text: widget.existingTask?.description ?? '');
+    _titleController = TextEditingController(
+      text: widget.existingTask?.title ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.existingTask?.description ?? '',
+    );
   }
 
   @override
@@ -58,18 +60,15 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
           );
 
     context.read<TaskFormBloc>().add(
-          widget.existingTask == null
-              ? CreateTask(task)
-              : UpdateTask(task),
-        );
+      widget.existingTask == null ? CreateTask(task) : UpdateTask(task),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            Text(widget.existingTask == null ? 'Create Task' : 'Edit Task'),
+        title: Text(widget.existingTask == null ? 'Create Task' : 'Edit Task'),
       ),
       body: BlocListener<TaskFormBloc, TaskFormState>(
         listener: (context, state) {
@@ -77,9 +76,9 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
             Navigator.pop(context);
           }
           if (state is TaskFormError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         child: Padding(
@@ -92,14 +91,14 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                   controller: _titleController,
                   decoration: const InputDecoration(labelText: 'Title'),
                   validator: (value) =>
-                      value == null || value.isEmpty ? 'Required' : null,
+                      value == null || value.isEmpty ? 'Title is required' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _descriptionController,
                   decoration: const InputDecoration(labelText: 'Description'),
                   validator: (value) =>
-                      value == null || value.isEmpty ? 'Required' : null,
+                      value == null || value.isEmpty ? 'Description is required' : null,
                 ),
                 const SizedBox(height: 24),
                 BlocBuilder<TaskFormBloc, TaskFormState>(

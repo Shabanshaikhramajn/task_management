@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:task_management/core/di/service_locator.dart';
 import 'package:task_management/core/router/app_router.dart';
 import 'package:task_management/data/models/task_hive_model.dart';
+import 'package:task_management/presentation/bloc/sync_bloc/sync_bloc.dart';
 
 import 'presentation/bloc/task_bloc/task_bloc.dart';
 import 'presentation/bloc/task_form_bloc/task_form_bloc.dart';
@@ -34,6 +35,10 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<TaskFormBloc>(
           create: (_) => sl<TaskFormBloc>(),
+        ),
+        BlocProvider<SyncBloc>(
+          lazy: false,
+          create: (_) => sl<SyncBloc>(),
         ),
       ],
       child: MaterialApp.router(
