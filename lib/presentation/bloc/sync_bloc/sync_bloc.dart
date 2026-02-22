@@ -17,50 +17,56 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> with WidgetsBindingObserver {
 
   SyncBloc(this.repository) : super(SyncIdle()) {
     WidgetsBinding.instance.addObserver(this);
-    debugPrint('🔥 SyncBloc CREATED');
-    on<StartSync>(_onStartSync);
+  on<StartSync>(_onStartSync);
 
     _startTimer();
     add(StartSync()); // initial app launch
   }
 
-   void _startTimer(){
+  void _startTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(_syncInterval, (_){
-      add(StartSync());
+    _timer = Timer.periodic(_syncInterval, (_) {
+      if (!_isSyncRunning) add(StartSync());
     });
-   }
+  }
 
-  void _stopTimer(){
+  void _stopTimer() {
     _timer?.cancel();
     _timer = null;
   }
 
-  // App lifecycle
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      _stopTimer();
+   if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    _stopTimer();
     } else if (state == AppLifecycleState.resumed) {
-      _startTimer();
-      add(StartSync());
+     _startTimer();
+
+      // Only add sync if not already running
+      if (!_isSyncRunning) {
+        add(StartSync());
+      }
     }
   }
 
   Future<void> _onStartSync( StartSync event, Emitter<SyncState> emit) async {
     if (_isSyncRunning) return;
- _isSyncRunning = true;
+    _isSyncRunning = true;
+
+    if (isClosed) return;
     emit(SyncInProgress());
- try {
+
+    try {
       final tasks = await repository.getPendingSyncTasks();
 
       for (final task in tasks) {
+        if (isClosed) return; // Stop if Bloc is disposed mid-sync
         await _syncTask(task);
       }
 
-      emit(SyncSuccess());
+      if (!isClosed) emit(SyncSuccess());
     } catch (e) {
-      emit(SyncFailure(e.toString()));
+      if (!isClosed) emit(SyncFailure(e.toString()));
     } finally {
       _isSyncRunning = false;
     }

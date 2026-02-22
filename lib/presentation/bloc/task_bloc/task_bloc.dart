@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:task_management/core/logger/logger.dart';
 import 'package:task_management/domain/entities/task.dart';
 import 'package:task_management/domain/repositories/task_repositories.dart';
 import 'package:task_management/presentation/bloc/task_bloc/task_event.dart';
@@ -9,8 +10,8 @@ import 'package:task_management/presentation/bloc/task_bloc/task_state.dart';
 
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final TaskRepository repository;
-  // final GetTasksUseCase getTasks;
   StreamSubscription<List<Task>>? _subscription;
+  final AppLogger _logger = AppLogger();
   int page = 0;
   final int pageSize = 6;
   bool isFetching = false;
@@ -33,12 +34,15 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   //  ----------------------------------------------------------------------------------------------------------------------------
   void _onTasksUpdated( TasksUpdated event, Emitter<TaskState> emit) {
+    _logger.d('Handling TasksUpdated event, total tasks: ${event.tasks.length}');
+
     allTasks = event.tasks;
     page = 0;
     final tasks = _applyQueryAndPaginate();
     final filteredTotal = _applyQuery().length;
 
     if (tasks.isEmpty) {
+      _logger.d(' No tasks found after applying filters');
       emit(TaskEmpty());
     } else {
       emit(TaskLoaded(
@@ -51,18 +55,22 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   // load tasks ----------------------------------------------------------------------------------------------------------------------------
 
   Future<void> _onLoadTasks(LoadTasks event,Emitter<TaskState> emit) async {
-    emit(TaskLoading());
+    _logger.d(' Loading tasks (refresh)');
+ emit(TaskLoading());
     page = 0;
     // Fake delay for pull-to-refresh testing
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 2) );
 
     final tasks = _applyQueryAndPaginate();
     final filteredTotal = _applyQuery().length;
 
     if (tasks.isEmpty) {
+      _logger.d(' No tasks found after load');
+
       emit(TaskEmpty());
     } else {
-      emit(TaskLoaded(
+      _logger.d(' Loaded ${tasks.length} tasks');
+    emit(TaskLoaded(
         tasks: tasks,
         hasReachedEnd: tasks.length >= filteredTotal,
       ));
@@ -74,8 +82,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
    final currentState = state;
    if (currentState is! TaskLoaded || currentState.hasReachedEnd) return;
 
-   debugPrint('📄 Loading next page...');
-   await Future.delayed(const Duration(seconds: 2));
+  await Future.delayed(const Duration(seconds: 2));
 
    page++;
 

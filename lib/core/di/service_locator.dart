@@ -50,4 +50,6 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton<SyncBloc>(
         () => SyncBloc(sl<TaskRepository>()),
   );
+
+
 }
