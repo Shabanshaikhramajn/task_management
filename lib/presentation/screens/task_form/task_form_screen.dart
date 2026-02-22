@@ -121,30 +121,24 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                       value == null || value.isEmpty ? 'Description is required' : null,
                 ),
                 const SizedBox(height: 24),
+                BlocBuilder<TaskFormBloc, TaskFormState>(
+                  builder: (context, state) {
+                    final currentStatus = state is TaskFormIdle ? state.status ?? TaskStatus.pending : TaskStatus.pending;
 
-                DropdownButtonFormField<TaskStatus>(
-                  initialValue: _selectedStatus,
-                  decoration:
-                  const InputDecoration(labelText: 'Task Status'),
-                  items:  [
-                    DropdownMenuItem(
-                      value: TaskStatus.pending,
-                      child: Text('Pending'),
-                    ),
-                    DropdownMenuItem(
-                      value: TaskStatus.inProgress,
-                      child: Text('In Progress'),
-                    ),
-                    DropdownMenuItem(
-                      value: TaskStatus.completed,
-                      child: Text('Completed'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() {
-                      _selectedStatus = value;
-                    });
+                    return DropdownButtonFormField<TaskStatus>(
+                      initialValue: currentStatus,
+                      decoration: const InputDecoration(labelText: 'Task Status'),
+                      items: const [
+                        DropdownMenuItem(value: TaskStatus.pending, child: Text('Pending')),
+                        DropdownMenuItem(value: TaskStatus.inProgress, child: Text('In Progress')),
+                        DropdownMenuItem(value: TaskStatus.completed, child: Text('Completed')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          context.read<TaskFormBloc>().add(ChangeTaskStatus(value));
+                        }
+                      },
+                    );
                   },
                 ),
                 const SizedBox(height: 24),

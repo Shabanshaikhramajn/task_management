@@ -12,6 +12,10 @@ class TaskFormBloc extends Bloc<TaskFormEvent, TaskFormState> {
   TaskFormBloc(this.saveTask) : super(TaskFormIdle()) {
     on<CreateTask>(_onCreateTask);
     on<UpdateTask>(_onUpdateTask);
+    on<ChangeTaskStatus>(_onChangeTaskStatus);
+    on<ChangeTaskTitle>(_onChangeTaskTitle);
+    on<ChangeTaskDescription>(_onChangeTaskDescription);
+
   }
 
   Future<void> _onCreateTask(
@@ -71,4 +75,39 @@ class TaskFormBloc extends Bloc<TaskFormEvent, TaskFormState> {
       isSaving = false;
     }
   }
+
+  void _onChangeTaskStatus(
+      ChangeTaskStatus event,
+      Emitter<TaskFormState> emit,
+      ) {
+    if (state is TaskFormIdle) {
+      final current = state as TaskFormIdle;
+      emit(current.copyWith(status: event.status));
+      _logger.d('Task status changed to: ${event.status}');
+    }
+  }
+
+  void _onChangeTaskTitle(
+      ChangeTaskTitle event,
+      Emitter<TaskFormState> emit,
+      ) {
+    if (state is TaskFormIdle) {
+      final current = state as TaskFormIdle;
+      emit(current.copyWith(title: event.title));
+      _logger.d('Task title changed to: ${event.title}');
+    }
+  }
+
+  void _onChangeTaskDescription(
+      ChangeTaskDescription event,
+      Emitter<TaskFormState> emit,
+      ) {
+    if (state is TaskFormIdle) {
+      final current = state as TaskFormIdle;
+      emit(current.copyWith(description: event.description));
+      _logger.d('Task description changed to: ${event.description}');
+    }
+  }
+
+
 }

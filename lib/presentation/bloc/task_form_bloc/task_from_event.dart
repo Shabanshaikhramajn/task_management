@@ -13,3 +13,20 @@ class UpdateTask extends TaskFormEvent {
   final Task task;
   UpdateTask(this.task);
 }
+
+class ChangeTaskTitle extends TaskFormEvent {
+  final String title;
+  ChangeTaskTitle(this.title);
+}
+
+class ChangeTaskDescription extends TaskFormEvent {
+  final String description;
+  ChangeTaskDescription(this.description);
+}
+
+/// Update form field: status
+class ChangeTaskStatus extends TaskFormEvent {
+  final TaskStatus status;
+  ChangeTaskStatus(this.status);
+}
+
