@@ -30,16 +30,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<TaskBloc>(
-          create: (_) => sl<TaskBloc>(),
-        ),
-        BlocProvider<TaskFormBloc>(
-          create: (_) => sl<TaskFormBloc>(),
-        ),
-        BlocProvider<SyncBloc>(
-          lazy: false,
-          create: (_) => sl<SyncBloc>(),
-        ),
+        BlocProvider<TaskBloc>(create: (_) => sl<TaskBloc>()),
+        BlocProvider<TaskFormBloc>(create: (_) => sl<TaskFormBloc>()),
+        BlocProvider<SyncBloc>(lazy: false, create: (_) => sl<SyncBloc>()),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,

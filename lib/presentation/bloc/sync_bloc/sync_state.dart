@@ -1,6 +1,5 @@
 abstract class SyncState {}
 
-
 class SyncIdle extends SyncState {}
 
 class SyncInProgress extends SyncState {}

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:task_management/core/logger/logger.dart';
 import 'package:task_management/domain/entities/task.dart';
 import 'package:task_management/domain/repositories/task_repositories.dart';
@@ -28,13 +27,15 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     on<TasksUpdated>(_onTasksUpdated);
 
     _subscription = repository.watchTasks().listen(
-          (tasks) => add(TasksUpdated(tasks)),
+      (tasks) => add(TasksUpdated(tasks)),
     );
   }
 
   //  ----------------------------------------------------------------------------------------------------------------------------
-  void _onTasksUpdated( TasksUpdated event, Emitter<TaskState> emit) {
-    _logger.d('Handling TasksUpdated event, total tasks: ${event.tasks.length}');
+  void _onTasksUpdated(TasksUpdated event, Emitter<TaskState> emit) {
+    _logger.d(
+      'Handling TasksUpdated event, total tasks: ${event.tasks.length}',
+    );
 
     allTasks = event.tasks;
     page = 0;
@@ -45,21 +46,20 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       _logger.d(' No tasks found after applying filters');
       emit(TaskEmpty());
     } else {
-      emit(TaskLoaded(
-        tasks: tasks,
-        hasReachedEnd: tasks.length >= filteredTotal,
-      ));
+      emit(
+        TaskLoaded(tasks: tasks, hasReachedEnd: tasks.length >= filteredTotal),
+      );
     }
   }
 
   // load tasks ----------------------------------------------------------------------------------------------------------------------------
 
-  Future<void> _onLoadTasks(LoadTasks event,Emitter<TaskState> emit) async {
+  Future<void> _onLoadTasks(LoadTasks event, Emitter<TaskState> emit) async {
     _logger.d(' Loading tasks (refresh)');
- emit(TaskLoading());
+    emit(TaskLoading());
     page = 0;
     // Fake delay for pull-to-refresh testing
-    await Future.delayed(const Duration(seconds: 2) );
+    await Future.delayed(const Duration(seconds: 2));
 
     final tasks = _applyQueryAndPaginate();
     final filteredTotal = _applyQuery().length;
@@ -70,85 +70,87 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       emit(TaskEmpty());
     } else {
       _logger.d(' Loaded ${tasks.length} tasks');
-    emit(TaskLoaded(
-        tasks: tasks,
-        hasReachedEnd: tasks.length >= filteredTotal,
-      ));
+      emit(
+        TaskLoaded(tasks: tasks, hasReachedEnd: tasks.length >= filteredTotal),
+      );
     }
   }
 
   //   ----------------------------------------------------------------------------------------------------------------------------
- Future<void> _onLoadNextPage( LoadNextPage event, Emitter<TaskState> emit) async {
-   final currentState = state;
-   if (currentState is! TaskLoaded || currentState.hasReachedEnd) return;
+  Future<void> _onLoadNextPage(
+    LoadNextPage event,
+    Emitter<TaskState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! TaskLoaded || currentState.hasReachedEnd) return;
 
-  await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 2));
 
-   page++;
+    page++;
 
-   final tasks = _applyQueryAndPaginate();
-   final filteredTotal = _applyQuery().length;
+    final tasks = _applyQueryAndPaginate();
+    final filteredTotal = _applyQuery().length;
 
-   emit(TaskLoaded(
-     tasks: tasks,
-     hasReachedEnd: tasks.length >= filteredTotal,
-   ));
+    emit(
+      TaskLoaded(tasks: tasks, hasReachedEnd: tasks.length >= filteredTotal),
+    );
   }
 
   //  ----------------------------------------------------------------------------------------------------------------------------
-void _onSearchTasks( SearchTasks event, Emitter<TaskState> emit) {
-  _searchQuery = event.query.trim().toLowerCase();
-  page = 0;
+  void _onSearchTasks(SearchTasks event, Emitter<TaskState> emit) {
+    _searchQuery = event.query.trim().toLowerCase();
+    page = 0;
 
-  final tasks = _applyQueryAndPaginate();
-  final filteredTotal = _applyQuery().length;
+    final tasks = _applyQueryAndPaginate();
+    final filteredTotal = _applyQuery().length;
 
-  if (tasks.isEmpty) {
-    emit(TaskEmpty());
-  } else {
-    emit(TaskLoaded(
-      tasks: tasks,
-      hasReachedEnd: tasks.length >= filteredTotal,
-    ));
+    if (tasks.isEmpty) {
+      emit(TaskEmpty());
+    } else {
+      emit(
+        TaskLoaded(tasks: tasks, hasReachedEnd: tasks.length >= filteredTotal),
+      );
+    }
   }
-  }
+
   //  ----------------------------------------------------------------------------------------------------------------------------
-void _onFilterTasks( FilterTasks event, Emitter<TaskState> emit) {
-  _activeStatusFilter = event.status;
-  page = 0;
+  void _onFilterTasks(FilterTasks event, Emitter<TaskState> emit) {
+    _activeStatusFilter = event.status;
+    page = 0;
 
-  final tasks = _applyQueryAndPaginate();
-  final filteredTotal = _applyQuery().length;
+    final tasks = _applyQueryAndPaginate();
+    final filteredTotal = _applyQuery().length;
 
-  if (tasks.isEmpty) {
-    emit(TaskEmpty());
-  } else {
-    emit(TaskLoaded(
-      tasks: tasks,
-      hasReachedEnd: tasks.length >= filteredTotal,
-    ));
+    if (tasks.isEmpty) {
+      emit(TaskEmpty());
+    } else {
+      emit(
+        TaskLoaded(tasks: tasks, hasReachedEnd: tasks.length >= filteredTotal),
+      );
+    }
   }
-  }
 
-//  ----------------------------------------------------------------------------------------------------------------------------
+  //  ----------------------------------------------------------------------------------------------------------------------------
   List<Task> _paginate() {
     final end = ((page + 1) * pageSize).clamp(0, allTasks.length);
     return allTasks.sublist(0, end);
   }
 
-
+  // ----------------------------------------------------------------------
   List<Task> _applyQueryAndPaginate() {
     final filtered = _applyQuery();
     final end = ((page + 1) * pageSize).clamp(0, filtered.length);
     return filtered.sublist(0, end);
   }
 
-
+  // ----------------------------------------------------------------------
   List<Task> _applyQuery() {
     List<Task> filtered = allTasks;
 
     if (_activeStatusFilter != null) {
-      filtered =  filtered.where((t) => t.status == _activeStatusFilter).toList();
+      filtered = filtered
+          .where((t) => t.status == _activeStatusFilter)
+          .toList();
     }
 
     if (_searchQuery.isNotEmpty) {
@@ -161,11 +163,10 @@ void _onFilterTasks( FilterTasks event, Emitter<TaskState> emit) {
     return filtered;
   }
 
-//  ----------------------------------------------------------------------------------------------------------------------------
+  //  ----------------------------------------------------------------------------------------------------------------------------
   @override
   Future<void> close() {
     _subscription?.cancel();
     return super.close();
   }
-
 }

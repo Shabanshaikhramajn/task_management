@@ -33,7 +33,10 @@ class TaskListView extends StatelessWidget {
 
         final task = tasks[index];
         return ListTile(
-          title: Text(task.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            task.title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -41,7 +44,10 @@ class TaskListView extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 "Status: ${ReusableFunctions.returnStatusString(task.status)}",
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(height: 2),
               Text(

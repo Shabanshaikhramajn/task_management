@@ -17,12 +17,12 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> with WidgetsBindingObserver {
 
   SyncBloc(this.repository) : super(SyncIdle()) {
     WidgetsBinding.instance.addObserver(this);
-  on<StartSync>(_onStartSync);
-
-    _startTimer();
-    add(StartSync()); // initial app launch
+    on<StartSync>(_onStartSync);
+ _startTimer();
+    add(StartSync()); 
   }
-
+  
+  // ----------------------------------------------------------------------
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(_syncInterval, (_) {
@@ -30,17 +30,20 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> with WidgetsBindingObserver {
     });
   }
 
+  // ----------------------------------------------------------------------
   void _stopTimer() {
     _timer?.cancel();
     _timer = null;
   }
 
+  // ----------------------------------------------------------------------
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-   if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-    _stopTimer();
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _stopTimer();
     } else if (state == AppLifecycleState.resumed) {
-     _startTimer();
+      _startTimer();
 
       // Only add sync if not already running
       if (!_isSyncRunning) {
@@ -49,7 +52,8 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _onStartSync( StartSync event, Emitter<SyncState> emit) async {
+  // ----------------------------------------------------------------------
+  Future<void> _onStartSync(StartSync event, Emitter<SyncState> emit) async {
     if (_isSyncRunning) return;
     _isSyncRunning = true;
 
@@ -71,31 +75,27 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> with WidgetsBindingObserver {
       _isSyncRunning = false;
     }
   }
-  
-  
-  Future<void> _syncTask(Task task )async{
+
+  // ----------------------------------------------------------------------
+  Future<void> _syncTask(Task task) async {
     await Future.delayed(const Duration(seconds: 2));
-    
-    final failed = Random().nextInt(100)<30;
-    if(failed){
-      await repository.saveTask(
-        task.copyWith(syncStatus: SyncStatus.failed)
-      );
+
+    final failed = Random().nextInt(100) < 30;
+    if (failed) {
+      await repository.saveTask(task.copyWith(syncStatus: SyncStatus.failed));
       return;
     }
     final serverUpdatedAt = task.updatedAt.subtract(const Duration(seconds: 5));
-    if(task.updatedAt.isAfter(serverUpdatedAt)){
+    if (task.updatedAt.isAfter(serverUpdatedAt)) {
       await repository.saveTask(task.copyWith(syncStatus: SyncStatus.synced));
-
     }
   }
 
+  // ----------------------------------------------------------------------
   @override
   Future<void> close() {
     WidgetsBinding.instance.removeObserver(this);
     _stopTimer();
     return super.close();
   }
-
-
 }

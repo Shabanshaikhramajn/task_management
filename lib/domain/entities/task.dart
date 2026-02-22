@@ -1,6 +1,9 @@
-enum TaskStatus { pending, inProgress ,completed }
+enum TaskStatus { pending, inProgress, completed }
+
 enum SyncStatus { synced, pendingSync, failed }
+
 enum FilterOption { all, pending, inProgress, completed }
+
 class Task {
   final String id;
   final String title;

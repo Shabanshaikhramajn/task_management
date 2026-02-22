@@ -1,4 +1,4 @@
-  import 'package:get_it/get_it.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:task_management/data/datasource/local/task_local_datasource.dart';
 import 'package:task_management/data/models/task_hive_model.dart';
@@ -25,31 +25,17 @@ Future<void> setupServiceLocator() async {
   );
 
   //  Repository
-  sl.registerLazySingleton<TaskRepository>(
-    () => TaskRepositoryImpl(sl()),
-  );
+  sl.registerLazySingleton<TaskRepository>(() => TaskRepositoryImpl(sl()));
 
   //  Use cases
-  sl.registerLazySingleton<GetTasksUseCase>(
-    () => GetTasksUseCase(sl()),
-  );
+  sl.registerLazySingleton<GetTasksUseCase>(() => GetTasksUseCase(sl()));
 
-  sl.registerLazySingleton<SaveTaskUseCase>(
-    () => SaveTaskUseCase(sl()),
-  );
+  sl.registerLazySingleton<SaveTaskUseCase>(() => SaveTaskUseCase(sl()));
 
   //  Blocs
-  sl.registerFactory<TaskBloc>(
-    () => TaskBloc(sl()),
-  );
+  sl.registerFactory<TaskBloc>(() => TaskBloc(sl()));
 
-  sl.registerFactory<TaskFormBloc>(
-    () => TaskFormBloc(sl()),
-  );
+  sl.registerFactory<TaskFormBloc>(() => TaskFormBloc(sl()));
 
-  sl.registerLazySingleton<SyncBloc>(
-        () => SyncBloc(sl<TaskRepository>()),
-  );
-
-
+  sl.registerLazySingleton<SyncBloc>(() => SyncBloc(sl<TaskRepository>()));
 }

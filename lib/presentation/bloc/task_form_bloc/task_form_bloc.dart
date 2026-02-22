@@ -15,9 +15,9 @@ class TaskFormBloc extends Bloc<TaskFormEvent, TaskFormState> {
     on<ChangeTaskStatus>(_onChangeTaskStatus);
     on<ChangeTaskTitle>(_onChangeTaskTitle);
     on<ChangeTaskDescription>(_onChangeTaskDescription);
-
   }
 
+  // ----------------------------------------------------------------------
   Future<void> _onCreateTask(
     CreateTask event,
     Emitter<TaskFormState> emit,
@@ -47,6 +47,7 @@ class TaskFormBloc extends Bloc<TaskFormEvent, TaskFormState> {
     }
   }
 
+  // ----------------------------------------------------------------------
   Future<void> _onUpdateTask(
     UpdateTask event,
     Emitter<TaskFormState> emit,
@@ -76,10 +77,11 @@ class TaskFormBloc extends Bloc<TaskFormEvent, TaskFormState> {
     }
   }
 
+  // ----------------------------------------------------------------------
   void _onChangeTaskStatus(
-      ChangeTaskStatus event,
-      Emitter<TaskFormState> emit,
-      ) {
+    ChangeTaskStatus event,
+    Emitter<TaskFormState> emit,
+  ) {
     if (state is TaskFormIdle) {
       final current = state as TaskFormIdle;
       emit(current.copyWith(status: event.status));
@@ -87,10 +89,7 @@ class TaskFormBloc extends Bloc<TaskFormEvent, TaskFormState> {
     }
   }
 
-  void _onChangeTaskTitle(
-      ChangeTaskTitle event,
-      Emitter<TaskFormState> emit,
-      ) {
+  void _onChangeTaskTitle(ChangeTaskTitle event, Emitter<TaskFormState> emit) {
     if (state is TaskFormIdle) {
       final current = state as TaskFormIdle;
       emit(current.copyWith(title: event.title));
@@ -98,16 +97,15 @@ class TaskFormBloc extends Bloc<TaskFormEvent, TaskFormState> {
     }
   }
 
+  // ----------------------------------------------------------------------
   void _onChangeTaskDescription(
-      ChangeTaskDescription event,
-      Emitter<TaskFormState> emit,
-      ) {
+    ChangeTaskDescription event,
+    Emitter<TaskFormState> emit,
+  ) {
     if (state is TaskFormIdle) {
       final current = state as TaskFormIdle;
       emit(current.copyWith(description: event.description));
       _logger.d('Task description changed to: ${event.description}');
     }
   }
-
-
 }
