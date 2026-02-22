@@ -17,7 +17,7 @@ Future<void> main() async {
   Hive.registerAdapter(TaskHiveModelAdapter());
   await Hive.openBox<TaskHiveModel>('tasks');
 
-  // DI init
+  // Dependency injection
   await setupServiceLocator();
 
   runApp(const MyApp());

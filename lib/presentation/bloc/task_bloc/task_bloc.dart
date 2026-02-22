@@ -12,7 +12,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   // final GetTasksUseCase getTasks;
   StreamSubscription<List<Task>>? _subscription;
   int page = 0;
-  final int pageSize = 10;
+  final int pageSize = 6;
   bool isFetching = false;
   TaskStatus? _activeStatusFilter;
   String _searchQuery = '';
@@ -141,8 +141,7 @@ void _onFilterTasks( FilterTasks event, Emitter<TaskState> emit) {
     List<Task> filtered = allTasks;
 
     if (_activeStatusFilter != null) {
-      filtered =
-          filtered.where((t) => t.status == _activeStatusFilter).toList();
+      filtered =  filtered.where((t) => t.status == _activeStatusFilter).toList();
     }
 
     if (_searchQuery.isNotEmpty) {

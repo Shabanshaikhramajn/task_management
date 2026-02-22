@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:task_management/domain/entities/task.dart';
 import 'package:task_management/presentation/bloc/task_form_bloc/task_form_bloc.dart';
 import 'package:task_management/presentation/bloc/task_form_bloc/task_form_state.dart';
@@ -19,7 +20,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
-
+  late TaskStatus _selectedStatus;
   @override
   void initState() {
     super.initState();
@@ -29,6 +30,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     _descriptionController = TextEditingController(
       text: widget.existingTask?.description ?? '',
     );
+    _selectedStatus =  widget.existingTask?.status ?? TaskStatus.pending;
   }
 
   @override
@@ -42,26 +44,44 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final now = DateTime.now();
-    final task = widget.existingTask == null
-        ? Task(
-            id: const Uuid().v4(),
-            title: _titleController.text.trim(),
-            description: _descriptionController.text.trim(),
-            status: TaskStatus.pending,
-            createdAt: now,
-            updatedAt: now,
-            syncStatus: SyncStatus.pendingSync,
-          )
-        : widget.existingTask!.copyWith(
-            title: _titleController.text.trim(),
-            description: _descriptionController.text.trim(),
-            updatedAt: now,
-            syncStatus: SyncStatus.pendingSync,
-          );
 
-    context.read<TaskFormBloc>().add(
-      widget.existingTask == null ? CreateTask(task) : UpdateTask(task),
-    );
+    // If editing an existing task
+    if (widget.existingTask != null) {
+      final oldTask = widget.existingTask!;
+
+      // Check if nothing changed
+      if (oldTask.title == _titleController.text.trim() &&
+          oldTask.description == _descriptionController.text.trim() &&
+          oldTask.status == _selectedStatus) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No changes detected')),
+        );
+        return;
+      }
+
+      final updatedTask = oldTask.copyWith(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        status: _selectedStatus,
+        updatedAt: now,
+        syncStatus: SyncStatus.pendingSync,
+      );
+
+      context.read<TaskFormBloc>().add(UpdateTask(updatedTask));
+    } else {
+      // Creating a new task
+      final newTask = Task(
+        id: const Uuid().v4(),
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        status: _selectedStatus,
+        createdAt: now,
+        updatedAt: now,
+        syncStatus: SyncStatus.pendingSync,
+      );
+
+      context.read<TaskFormBloc>().add(CreateTask(newTask));
+    }
   }
 
   @override
@@ -73,7 +93,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
       body: BlocListener<TaskFormBloc, TaskFormState>(
         listener: (context, state) {
           if (state is TaskFormSaved) {
-            Navigator.pop(context);
+            GoRouter.of(context).pop();
           }
           if (state is TaskFormError) {
             ScaffoldMessenger.of(
@@ -99,6 +119,33 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                   decoration: const InputDecoration(labelText: 'Description'),
                   validator: (value) =>
                       value == null || value.isEmpty ? 'Description is required' : null,
+                ),
+                const SizedBox(height: 24),
+
+                DropdownButtonFormField<TaskStatus>(
+                  initialValue: _selectedStatus,
+                  decoration:
+                  const InputDecoration(labelText: 'Task Status'),
+                  items:  [
+                    DropdownMenuItem(
+                      value: TaskStatus.pending,
+                      child: Text('Pending'),
+                    ),
+                    DropdownMenuItem(
+                      value: TaskStatus.inProgress,
+                      child: Text('In Progress'),
+                    ),
+                    DropdownMenuItem(
+                      value: TaskStatus.completed,
+                      child: Text('Completed'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      _selectedStatus = value;
+                    });
+                  },
                 ),
                 const SizedBox(height: 24),
                 BlocBuilder<TaskFormBloc, TaskFormState>(

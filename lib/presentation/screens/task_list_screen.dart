@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:task_management/core/router/app_strings.dart';
+import 'package:task_management/core/utils/reusable_functions.dart';
 import 'package:task_management/domain/entities/task.dart';
 import 'package:task_management/presentation/bloc/task_bloc/task_bloc.dart';
 import 'package:task_management/presentation/bloc/task_bloc/task_event.dart';
@@ -60,19 +63,40 @@ class _TaskListScreenState extends State<TaskListScreen> {
       appBar: AppBar(
         title: const Text('Tasks'),
         actions: [
-          PopupMenuButton<TaskStatus?>(
-            onSelected: (status) {
+          PopupMenuButton<FilterOption>(
+            onSelected: (filter) {
+              TaskStatus? status;
+              switch (filter) {
+                case FilterOption.all:
+                  status = null;
+                  break;
+                case FilterOption.pending:
+                  status = TaskStatus.pending;
+                  break;
+                case FilterOption.inProgress:
+                  status = TaskStatus.inProgress;
+                  break;
+                case FilterOption.completed:
+                  status = TaskStatus.completed;
+                  break;
+              }
               context.read<TaskBloc>().add(FilterTasks(status));
             },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: null, child: Text('All')),
-              PopupMenuItem(value: TaskStatus.pending, child: Text('Pending Sync')),
-              PopupMenuItem(
-                value: TaskStatus.failed,
-                child: Text('Failed'),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: FilterOption.all,
+                child: Text('All'),
               ),
-              PopupMenuItem(
-                value: TaskStatus.completed,
+              const PopupMenuItem(
+                value: FilterOption.pending,
+                child: Text('Pending'),
+              ),
+              const PopupMenuItem(
+                value: FilterOption.inProgress,
+                child: Text('In Progress'),
+              ),
+              const PopupMenuItem(
+                value: FilterOption.completed,
                 child: Text('Completed'),
               ),
             ],
@@ -112,7 +136,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
                       onRefresh: () async {
                         context.read<TaskBloc>().add(LoadTasks());
                       },
-                      child: ListView.builder(
+                      child: ListView.separated(
+                        separatorBuilder: (context,index){
+                          return Divider();
+                        },
                         controller: _scrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
                         itemCount: state.tasks.length + (state.hasReachedEnd ? 0 : 1),
@@ -126,17 +153,33 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
                           final task = state.tasks[index];
                           return ListTile(
-                            title: Text(task.title),
-                            subtitle: Text(task.description),
-                            trailing: Text(task.syncStatus.name),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      TaskFormScreen(existingTask: task),
+                            title: Text(task.title, style: TextStyle(fontWeight: FontWeight.bold),),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(task.description),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Status: ${ReusableFunctions.returnStatusString(task.status)}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12
+                                  ),
                                 ),
-                              );
+                                const SizedBox(height: 2),
+                                Text(
+                                  "Created: ${ReusableFunctions.formatDateTime(task.createdAt)}",
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                if (task.updatedAt.difference(task.createdAt).inSeconds != 0)
+                                Text(
+                                  "Updated: ${ReusableFunctions.formatDateTime(task.updatedAt)}",
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ), trailing: Text(task.syncStatus.name),
+                            onTap: () {
+                              GoRouter.of(context).push(AppStrings.formScreen, extra: task);
                             },
                           );
                         },
@@ -157,10 +200,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const TaskFormScreen()),
-          );
+          GoRouter.of(context).push(AppStrings.formScreen);
         },
         child: const Icon(Icons.add),
       ),
