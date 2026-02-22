@@ -34,13 +34,16 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   //  ----------------------------------------------------------------------------------------------------------------------------
   void _onTasksUpdated( TasksUpdated event, Emitter<TaskState> emit) {
     allTasks = event.tasks;
+    page = 0;
+    final tasks = _applyQueryAndPaginate();
+    final filteredTotal = _applyQuery().length;
 
-    if (allTasks.isEmpty) {
+    if (tasks.isEmpty) {
       emit(TaskEmpty());
     } else {
       emit(TaskLoaded(
-        tasks: _paginate(),
-        hasReachedEnd: allTasks.length <= pageSize,
+        tasks: tasks,
+        hasReachedEnd: tasks.length >= filteredTotal,
       ));
     }
   }
@@ -50,62 +53,106 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   Future<void> _onLoadTasks(LoadTasks event,Emitter<TaskState> emit) async {
     emit(TaskLoading());
     page = 0;
+    // Fake delay for pull-to-refresh testing
     await Future.delayed(const Duration(seconds: 2));
-    if (allTasks.isNotEmpty) {
-      emit(TaskLoaded( tasks: _paginate(), hasReachedEnd: allTasks.length <= pageSize ));
-    } else {
+
+    final tasks = _applyQueryAndPaginate();
+    final filteredTotal = _applyQuery().length;
+
+    if (tasks.isEmpty) {
       emit(TaskEmpty());
+    } else {
+      emit(TaskLoaded(
+        tasks: tasks,
+        hasReachedEnd: tasks.length >= filteredTotal,
+      ));
     }
   }
 
   //   ----------------------------------------------------------------------------------------------------------------------------
  Future<void> _onLoadNextPage( LoadNextPage event, Emitter<TaskState> emit) async {
-    final currentState = state;
-    if (currentState is! TaskLoaded) return;
-    if (currentState.hasReachedEnd) {
-      debugPrint('🚫 Pagination stopped: reached end');
-      return;
-    }
-    await Future.delayed(const Duration(seconds: 2));
-    page++;
-   debugPrint('📄 Page: $page');
+   final currentState = state;
+   if (currentState is! TaskLoaded || currentState.hasReachedEnd) return;
+
+   debugPrint('📄 Loading next page...');
+   await Future.delayed(const Duration(seconds: 2));
+
+   page++;
+
+   final tasks = _applyQueryAndPaginate();
+   final filteredTotal = _applyQuery().length;
+
    emit(TaskLoaded(
-     tasks: _paginate(),
-     hasReachedEnd: (page + 1) * pageSize >= allTasks.length,
+     tasks: tasks,
+     hasReachedEnd: tasks.length >= filteredTotal,
    ));
   }
 
   //  ----------------------------------------------------------------------------------------------------------------------------
 void _onSearchTasks( SearchTasks event, Emitter<TaskState> emit) {
-  final query = event.query.trim().toLowerCase();
+  _searchQuery = event.query.trim().toLowerCase();
+  page = 0;
 
-  if (query.isEmpty) {
-    emit(TaskLoaded( tasks: allTasks, hasReachedEnd: true ));
-    return;
-    }
+  final tasks = _applyQueryAndPaginate();
+  final filteredTotal = _applyQuery().length;
 
-  final filtered = allTasks.where((t) {
-    final title = t.title.toLowerCase();
-    final description = t.description.toLowerCase();
-    return title.contains(query) || description.contains(query);
-  }).toList();
-
-  emit(TaskLoaded(  tasks: filtered, hasReachedEnd: true ));
+  if (tasks.isEmpty) {
+    emit(TaskEmpty());
+  } else {
+    emit(TaskLoaded(
+      tasks: tasks,
+      hasReachedEnd: tasks.length >= filteredTotal,
+    ));
+  }
   }
   //  ----------------------------------------------------------------------------------------------------------------------------
 void _onFilterTasks( FilterTasks event, Emitter<TaskState> emit) {
-    final filtered = event.status == null? allTasks : allTasks.where((t) => t.status == event.status).toList();
+  _activeStatusFilter = event.status;
+  page = 0;
 
+  final tasks = _applyQueryAndPaginate();
+  final filteredTotal = _applyQuery().length;
+
+  if (tasks.isEmpty) {
+    emit(TaskEmpty());
+  } else {
     emit(TaskLoaded(
-      tasks: filtered,
-      hasReachedEnd: true,
+      tasks: tasks,
+      hasReachedEnd: tasks.length >= filteredTotal,
     ));
+  }
   }
 
 //  ----------------------------------------------------------------------------------------------------------------------------
   List<Task> _paginate() {
     final end = ((page + 1) * pageSize).clamp(0, allTasks.length);
     return allTasks.sublist(0, end);
+  }
+
+
+  List<Task> _applyQueryAndPaginate() {
+    final filtered = _applyQuery();
+    final end = ((page + 1) * pageSize).clamp(0, filtered.length);
+    return filtered.sublist(0, end);
+  }
+
+
+  List<Task> _applyQuery() {
+    List<Task> filtered = allTasks;
+
+    if (_activeStatusFilter != null) {
+      filtered =
+          filtered.where((t) => t.status == _activeStatusFilter).toList();
+    }
+
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((t) {
+        return t.title.toLowerCase().contains(_searchQuery) ||
+            t.description.toLowerCase().contains(_searchQuery);
+      }).toList();
+    }
+
+    return filtered;
   }
 
 //  ----------------------------------------------------------------------------------------------------------------------------
