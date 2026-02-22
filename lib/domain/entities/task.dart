@@ -1,4 +1,4 @@
-enum TaskStatus { pending, inProgress, completed }
+enum TaskStatus { pending, failed ,completed }
 enum SyncStatus { synced, pendingSync, failed }
 
 class Task {

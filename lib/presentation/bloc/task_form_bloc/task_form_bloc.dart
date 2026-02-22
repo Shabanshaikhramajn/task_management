@@ -23,7 +23,7 @@ class TaskFormBloc extends Bloc<TaskFormEvent, TaskFormState> {
     emit(TaskFormSaving());
 
     try {
-      // await Future.delayed(const Duration(seconds: 3));
+      // await Future.delayed(const Duration(seconds: 2));
       final task = event.task.copyWith(
         updatedAt: DateTime.now(),
         syncStatus: SyncStatus.pendingSync,
@@ -49,7 +49,7 @@ class TaskFormBloc extends Bloc<TaskFormEvent, TaskFormState> {
     emit(TaskFormSaving());
 
     try {
-      // await Future.delayed(const Duration(seconds: 3));
+      // await Future.delayed(const Duration(seconds: 2));
       final task = event.task.copyWith(
         updatedAt: DateTime.now(),
         syncStatus: SyncStatus.pendingSync,

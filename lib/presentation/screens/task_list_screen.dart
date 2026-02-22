@@ -17,7 +17,7 @@ class TaskListScreen extends StatefulWidget {
 class _TaskListScreenState extends State<TaskListScreen> {
   final ScrollController _scrollController = ScrollController();
   Timer? _debounce;
-
+  bool _isLoadingMore = false;
   @override
   void initState() {
     super.initState();
@@ -27,11 +27,19 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 100) {
+        _scrollController.position.maxScrollExtent - 100 &&
+        !_isLoadingMore) {
+
+      _isLoadingMore = true;
+
       context.read<TaskBloc>().add(LoadNextPage());
+
+      // small delay to prevent spam
+      Future.delayed(const Duration(milliseconds: 300), () {
+        _isLoadingMore = false;
+      });
     }
   }
-
   void _onSearch(String query) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
@@ -58,10 +66,10 @@ class _TaskListScreenState extends State<TaskListScreen> {
             },
             itemBuilder: (_) => const [
               PopupMenuItem(value: null, child: Text('All')),
-              PopupMenuItem(value: TaskStatus.pending, child: Text('Pending')),
+              PopupMenuItem(value: TaskStatus.pending, child: Text('Pending Sync')),
               PopupMenuItem(
-                value: TaskStatus.inProgress,
-                child: Text('In Progress'),
+                value: TaskStatus.failed,
+                child: Text('Failed'),
               ),
               PopupMenuItem(
                 value: TaskStatus.completed,
@@ -71,74 +79,81 @@ class _TaskListScreenState extends State<TaskListScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search tasks...',
-                border: OutlineInputBorder(),
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: (){
+          FocusScope.of(context).unfocus();
+        },
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: TextField(
+                decoration: const InputDecoration(
+                  hintText: 'Search tasks...',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: _onSearch,
               ),
-              onChanged: _onSearch,
             ),
-          ),
-          Expanded(
-            child: BlocBuilder<TaskBloc, TaskState>(
-              builder: (context, state) {
-                if (state is TaskLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            Expanded(
+              child: BlocBuilder<TaskBloc, TaskState>(
+                builder: (context, state) {
+                  if (state is TaskLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                if (state is TaskEmpty) {
-                  return const Center(child: Text('No tasks found'));
-                }
+                  if (state is TaskEmpty) {
+                    return const Center(child: Text('No tasks found'));
+                  }
 
-                if (state is TaskLoaded) {
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      context.read<TaskBloc>().add(LoadTasks());
-                    },
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      itemCount: state.tasks.length + (state.hasReachedEnd ? 0 : 1),
-                      itemBuilder: (context, index) {
-                        if (index >= state.tasks.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-
-                        final task = state.tasks[index];
-                        return ListTile(
-                          title: Text(task.title),
-                          subtitle: Text(task.description),
-                          trailing: Text(task.syncStatus.name),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    TaskFormScreen(existingTask: task),
-                              ),
-                            );
-                          },
-                        );
+                  if (state is TaskLoaded) {
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        context.read<TaskBloc>().add(LoadTasks());
                       },
-                    ),
-                  );
-                }
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: state.tasks.length + (state.hasReachedEnd ? 0 : 1),
+                        itemBuilder: (context, index) {
+                          if (index >= state.tasks.length) {
+                            return const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
 
-                if (state is TaskError) {
-                  return Center(child: Text(state.message));
-                }
+                          final task = state.tasks[index];
+                          return ListTile(
+                            title: Text(task.title),
+                            subtitle: Text(task.description),
+                            trailing: Text(task.syncStatus.name),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      TaskFormScreen(existingTask: task),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    );
+                  }
 
-                return const SizedBox.shrink();
-              },
+                  if (state is TaskError) {
+                    return Center(child: Text(state.message));
+                  }
+
+                  return const SizedBox.shrink();
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
